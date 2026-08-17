@@ -1,0 +1,14 @@
+# dependencies (junction links, never commit)
+node_modules/
+
+# build artifacts — lib 提交（clone 即用），tsbuildinfo 不提交
+*.tsbuildinfo
+.vite-temp/
+
+# runtime data & logs
+log/
+*.tmp
+*.log
+
+# local tooling
+.DS_Store

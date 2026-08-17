@@ -1,0 +1,55 @@
+{
+  "name": "@dsh-external/dsh-memory",
+  "version": "0.1.0",
+  "description": "本地文件记忆引擎：turn/end 自动提取 → 分层编译（短期时间线/长期沉淀/身份/事实/每日日志）→ pre-step 注入 + 侧边栏记忆面板（搜索/标签/置顶/裁决），数据落 ~/.dsh/memories/dsh-memory/，零外部依赖、离线可用",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "scripts/build.sh"
+  ],
+  "license": "BSD-3-Clause",
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-client-locale": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-client-runtime": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-client-ui-primitives": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-client-ui-sidebar": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc <1",
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc <1",
+    "cordis": ">=4.0.0-rc <5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "~18.3.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "build:client": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:client": "tsc -p tsconfig.client.json --noEmit"
+  }
+}
