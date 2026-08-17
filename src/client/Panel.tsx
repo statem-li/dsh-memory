@@ -124,14 +124,23 @@ function containsSensitive(text: string): boolean {
   return SENSITIVE_PATTERNS.some(pattern => pattern.test(text))
 }
 
-/** 大脑/记忆图标（线性 SVG）。 */
+/**
+ * 大脑/记忆图标（Lucide `brain`，MIT 开源，24 viewBox + stroke-width 2，
+ * 标准矢量设计——小尺寸下依然清晰，替代自绘细描边版）。
+ * 来源：https://lucide.dev/icons/brain
+ */
 export function BrainIcon({ size = 16 }: { size?: number }): JSX.Element {
   return (
-    <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M6 2.6a2.2 2.2 0 0 0-3.9 1.5 2.5 2.5 0 0 0-.6 4.6 2.3 2.3 0 0 0 1 3.8 2.2 2.2 0 0 0 4.2.7" />
-      <path d="M10 2.6a2.2 2.2 0 0 1 3.9 1.5 2.5 2.5 0 0 1 .6 4.6 2.3 2.3 0 0 1-1 3.8 2.2 2.2 0 0 1-4.2.7" />
-      <path d="M6.8 12.8c0-1.4.6-2.3 1.2-2.3s1.2.9 1.2 2.3" opacity=".6" />
-      <path d="M8 2.5v9" opacity=".6" />
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+      <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+      <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+      <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
+      <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
+      <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
+      <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
+      <path d="M6 18a4 4 0 0 1-1.967-.516" />
+      <path d="M19.967 17.484A4 4 0 0 1 18 18" />
     </svg>
   )
 }

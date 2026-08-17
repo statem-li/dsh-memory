@@ -5,9 +5,10 @@
  */
 
 import { useEffect, useState } from 'react'
-import { IconThinkOutline14, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MemoryApi } from './api.ts'
+import { BrainIcon } from './Panel.tsx'
 import { css, ensureStyles } from './styles.ts'
 
 /** 完整 props：composer 插槽 standardProps 的 sessionId + 注入 API 面 + locale。 */
@@ -47,7 +48,7 @@ export function MemoryToggle({ sessionId, t, ...api }: MemoryToggleProps): JSX.E
         aria-pressed={isOn}
         onClick={toggle}
       >
-        <IconThinkOutline14 />
+        <BrainIcon size={14} />
       </button>
     </Tooltip>
   )
