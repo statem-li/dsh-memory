@@ -1,18 +1,21 @@
 /**
  * dsh-memory browser half：注册侧边栏 footer 动作（sidebar.footer.action，
- * order 6 紧邻技能入口右侧）并打开记忆面板。全部数据走 host 的
- * /api/dsh-memory/* HTTP 路由（纯 fetch——无 typert、无 DSH 源码改动）。
+ * 记忆入口）与 composer 输入框左端的记忆注入开关（conversation.input.left）。
+ * 全部数据走 host 的 /api/dsh-memory/* HTTP 路由（纯 fetch——无 typert、无 DSH 源码改动）。
  */
 
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { MemoryEntry } from './Entry.tsx'
+import { MemoryToggle } from './Toggle.tsx'
 import { createMemoryApi, type MemoryApi } from './api.ts'
 import { en, NS, zh, type MemoryLocaleKey } from './locales.ts'
 
 export type { MemoryEntryProps } from './Entry.tsx'
 export type { MemoryPanelProps, MemoryTab } from './Panel.tsx'
+export type { MemoryToggleProps } from './Toggle.tsx'
 export type { MemoryLocaleKey } from './locales.ts'
 export type { MemoryApi, MemoryEntryView, ProjectView, ChangeView } from './api.ts'
 
@@ -41,4 +44,13 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: panelInjected,
   }, MemoryEntry))
+
+  // 记忆注入开关：composer 输入框工具行左端（resident chrome 之后，小常驻控件）。
+  ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
+    name: 'conversation.input.left',
+    id: 'dsh-memory-inject-toggle',
+    order: 100,
+    locale: NS,
+    inject: panelInjected,
+  }, MemoryToggle))
 }

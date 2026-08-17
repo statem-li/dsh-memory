@@ -52,6 +52,8 @@ export const zh = {
   addScopeProject: '项目',
   selectProject: '请选择项目',
   sensitiveConfirm: '内容包含疑似敏感信息（token/密钥等）。仍要保存吗？保存后注入上下文可能被模型读取，风险自担。',
+  injectOn: '记忆注入：开',
+  injectOff: '记忆注入：关',
   addSaved: '已添加记忆',
 } satisfies Record<string, string>
 
@@ -113,5 +115,7 @@ export const en = {
   addScopeProject: 'Project',
   selectProject: 'Select a project',
   sensitiveConfirm: 'This content looks like sensitive credentials (token/key). Save anyway? Injected memories may be read by the model — you take the risk.',
+  injectOn: 'Memory injection: on',
+  injectOff: 'Memory injection: off',
   addSaved: 'Memory added',
 } satisfies Record<MemoryLocaleKey, string>

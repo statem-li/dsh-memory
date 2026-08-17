@@ -134,6 +134,21 @@ async function handle(
       return
     }
 
+    // ── 记忆注入开关（按会话） ────────────────────────────────────────
+    if (method === 'GET' && rest === '/inject-state') {
+      const sessionId = url.searchParams.get('sessionId') ?? ''
+      json(res, 200, { enabled: await store.isInjectEnabled(sessionId) })
+      return
+    }
+    if (method === 'POST' && rest === '/inject-state') {
+      const body = await readBody(req) as Record<string, unknown>
+      const sessionId = requireString(body.sessionId, 'sessionId')
+      const enabled = body.enabled !== false
+      await store.setInjectEnabled(sessionId, enabled)
+      json(res, 200, { ok: true, enabled })
+      return
+    }
+
     // ── 裁决操作 ──────────────────────────────────────────────────────
     if (method === 'POST' && rest === '/pin') {
       const body = await readBody(req) as Record<string, unknown>

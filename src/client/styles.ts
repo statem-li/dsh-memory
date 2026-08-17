@@ -47,6 +47,9 @@ export const css = {
   addForm: 'dsh-memory-add-form',
   addMeta: 'dsh-memory-add-meta',
   check: 'dsh-memory-check',
+  toggle: 'dsh-memory-toggle',
+  toggleOn: 'dsh-memory-toggle-on',
+  toggleOff: 'dsh-memory-toggle-off',
   error: 'dsh-memory-error',
   visuallyHidden: 'dsh-memory-visually-hidden',
 } as const
@@ -114,6 +117,11 @@ const SHEET = `
 .dsh-memory-inline-input{height:32px;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.08));border-radius:8px;padding:0 10px;font-size:13px;color:var(--dsw-alias-label-primary,#eee);background:var(--dsw-alias-bg-base,#0e1116)}
 .dsh-memory-inline-textarea{min-height:64px;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.08));border-radius:8px;padding:8px 10px;font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary,#eee);background:var(--dsw-alias-bg-base,#0e1116);resize:vertical;font-family:inherit}
 .dsh-memory-edit-buttons{display:flex;align-items:center;gap:6px}
+.dsh-memory-toggle{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:none;border-radius:8px;padding:0;background:transparent;cursor:pointer;color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-memory-toggle:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.06))}
+.dsh-memory-toggle-on{color:var(--dsw-alias-brand-primary,#4a9eff)}
+.dsh-memory-toggle-on:hover{color:var(--dsw-alias-brand-primary,#4a9eff)}
+.dsh-memory-toggle-off{color:var(--dsw-alias-label-tertiary,#888);opacity:.55}
 .dsh-memory-error{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-state-error-primary,#e0434b)}
 .dsh-memory-visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 `

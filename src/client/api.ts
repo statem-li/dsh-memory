@@ -111,6 +111,8 @@ export interface MemoryApi {
     pinned?: boolean
     importance?: number
   }) => Promise<{ ok: boolean; created: boolean; entry: MemoryEntryView }>
+  getInjectState: (sessionId: string) => Promise<{ enabled: boolean }>
+  setInjectState: (sessionId: string, enabled: boolean) => Promise<{ ok: boolean; enabled: boolean }>
 }
 
 /** 构造面板 API 面。 */
@@ -135,5 +137,7 @@ export function createMemoryApi(): MemoryApi {
     deleteEntry: (entryId) => sendJson<{ ok: boolean }>('/delete', { entryId }),
     meta: (projectHash, patch) => sendJson<{ ok: boolean; meta: ProjectView }>('/meta', { projectHash, ...patch }),
     remember: (input) => sendJson<{ ok: boolean; created: boolean; entry: MemoryEntryView }>('/remember', input),
+    getInjectState: (sessionId) => getJson<{ enabled: boolean }>(`/inject-state?sessionId=${encodeURIComponent(sessionId)}`),
+    setInjectState: (sessionId, enabled) => sendJson<{ ok: boolean; enabled: boolean }>('/inject-state', { sessionId, enabled }),
   }
 }

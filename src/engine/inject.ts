@@ -91,6 +91,8 @@ export function createMemoryInjector(
     }
     if (decision.kind !== 'enter' || payload.signal.aborted) return decision
     const sessionId = payload.agent.session.id
+    // 该会话的记忆注入开关（对话框旁开关控制）：关闭则本会话不注入。
+    if (!(await store.isInjectEnabled(sessionId))) return decision
     const counter = (stepCounters.get(sessionId) ?? 0) + 1
     stepCounters.set(sessionId, counter)
     // 注入频率：首步必注，之后每 injectRefreshSteps 步刷新一次。

@@ -46,6 +46,7 @@ link_pkg @deepseek-ai/dsh-client-ui-slots packages/client/ui-slots
 link_pkg @deepseek-ai/dsh-client-ui-primitives packages/client/ui-primitives
 link_pkg @deepseek-ai/dsh-client-ui-sidebar packages/client/ui-sidebar
 link_pkg @deepseek-ai/dsh-client-locale packages/client/locale
+link_pkg @deepseek-ai/dsh-client-ui-conversation packages/client/ui-conversation
 
 # clsx 是 ui-primitives 的传递依赖,从 checkout 的 pnpm store 解析
 CLSX_DIR=$(find "$CHECKOUT/node_modules/.pnpm" -maxdepth 1 -type d -iname 'clsx@*' 2>/dev/null | head -1)

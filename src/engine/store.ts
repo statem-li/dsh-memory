@@ -343,6 +343,38 @@ export class MemoryStore {
     await atomicWriteJson(this.stateFile(), state)
   }
 
+  // ── 记忆注入开关（按会话，内存缓存 + state.json 持久化） ───────────
+
+  /** 注入被关闭的会话 id（内存缓存；null = 未加载）。 */
+  private injectDisabledCache: Set<string> | null = null
+
+  private async ensureInjectCache(): Promise<Set<string>> {
+    if (this.injectDisabledCache !== null) return this.injectDisabledCache
+    const state = await this.readState()
+    this.injectDisabledCache = new Set(Array.isArray(state.injectDisabled) ? state.injectDisabled : [])
+    return this.injectDisabledCache
+  }
+
+  /** 该会话是否启用记忆注入（默认开启）。 */
+  async isInjectEnabled(sessionId: string): Promise<boolean> {
+    const cache = await this.ensureInjectCache()
+    return !cache.has(sessionId)
+  }
+
+  /** 设置该会话的记忆注入开关（持久化到 state.json，走写串行队列）。 */
+  async setInjectEnabled(sessionId: string, enabled: boolean): Promise<void> {
+    const cache = await this.ensureInjectCache()
+    const next = new Set(cache)
+    if (enabled) next.delete(sessionId)
+    else next.add(sessionId)
+    this.injectDisabledCache = next
+    await this.enqueueWrite(async () => {
+      const state = await this.readState()
+      state.injectDisabled = [...next]
+      await this.writeState(state)
+    })
+  }
+
   // ── 项目 meta ───────────────────────────────────────────────────────
 
   async readProjectMeta(hash: string): Promise<ProjectMeta | undefined> {

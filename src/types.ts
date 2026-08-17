@@ -55,6 +55,8 @@ export interface StoreState {
   perSession: Record<string, SessionTickerState>
   /** 上次每日编译日期（YYYY-MM-DD）。 */
   lastDailyDate: string | null
+  /** 记忆注入被关闭的会话 id 列表（不在列表 = 注入开启）。 */
+  injectDisabled?: string[]
 }
 
 /** 单个会话的 ticker 状态。 */
