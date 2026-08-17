@@ -148,6 +148,30 @@ export class MemoryStore {
     await atomicWriteJson(this.entriesFile(), { version: 1, entries })
   }
 
+  /**
+   * entries.json 写串行队列：所有「读-改-写」操作必须经此队列执行，
+   * 消除提取/注入命中刷新/API 裁决/每日编译之间的并发覆盖（read-modify-write 竞争）。
+   */
+  private writeQueue: Promise<void> = Promise.resolve()
+  private enqueueWrite<T>(task: () => Promise<T>): Promise<T> {
+    const result = this.writeQueue.then(task)
+    this.writeQueue = result.then(() => undefined, () => undefined)
+    return result
+  }
+
+  /**
+   * 原子化「读 entries → 修改 → 写回」。fn 原地修改传入数组（或返回替换数组）。
+   * @param fn - 接收当前 entries 快照，修改或返回新数组；返回值透传。
+   */
+  async mutateEntries<T>(fn: (entries: MemoryEntry[]) => Promise<T> | T): Promise<T> {
+    return this.enqueueWrite(async () => {
+      const entries = await this.readEntries()
+      const result = await fn(entries)
+      await this.writeEntries(entries)
+      return result
+    })
+  }
+
   async getEntry(id: string): Promise<MemoryEntry | undefined> {
     const entries = await this.readEntries()
     return entries.find(entry => entry.id === id)
@@ -168,67 +192,92 @@ export class MemoryStore {
     layer?: 'short' | 'long'
     source?: 'extract' | 'manual'
   }): Promise<{ created: boolean; entry: MemoryEntry }> {
-    const entries = await this.readEntries()
-    const id = entryIdOf(next.content, next.scope, next.projectHash)
-    const existing = entries.find(entry => entry.id === id)
-    const now = nowIso()
-    let entry: MemoryEntry
-    if (existing !== undefined) {
-      entry = {
-        ...existing,
-        content: next.content,
-        tags: mergeTags(existing.tags, next.tags),
-        pinned: next.pinned ?? existing.pinned,
-        importance: Math.max(existing.importance, next.importance ?? existing.importance),
-        layer: next.layer ?? existing.layer,
-        updatedAt: now,
+    return this.mutateEntries(entries => {
+      const id = entryIdOf(next.content, next.scope, next.projectHash)
+      const existing = entries.find(entry => entry.id === id)
+      const now = nowIso()
+      let entry: MemoryEntry
+      if (existing !== undefined) {
+        entry = {
+          ...existing,
+          content: next.content,
+          tags: mergeTags(existing.tags, next.tags),
+          pinned: next.pinned ?? existing.pinned,
+          importance: Math.max(existing.importance, next.importance ?? existing.importance),
+          layer: next.layer ?? existing.layer,
+          updatedAt: now,
+        }
+        entries.splice(entries.indexOf(existing), 1, entry)
+        return { created: false, entry }
       }
-      await this.writeEntries(entries.map(candidate => candidate.id === id ? entry : candidate))
-      return { created: false, entry }
-    }
-    entry = {
-      id,
-      content: next.content,
-      scope: next.scope,
-      projectHash: next.scope === 'project' ? next.projectHash : null,
-      tags: next.tags ?? [],
-      pinned: next.pinned ?? false,
-      createdAt: now,
-      updatedAt: now,
-      importance: next.importance ?? 10,
-      lastHitAt: null,
-      layer: next.layer ?? 'short',
-      source: next.source ?? 'extract',
-    }
-    await this.writeEntries([...entries, entry])
-    return { created: true, entry }
+      entry = {
+        id,
+        content: next.content,
+        scope: next.scope,
+        projectHash: next.scope === 'project' ? next.projectHash : null,
+        tags: next.tags ?? [],
+        pinned: next.pinned ?? false,
+        createdAt: now,
+        updatedAt: now,
+        importance: next.importance ?? 10,
+        lastHitAt: null,
+        layer: next.layer ?? 'short',
+        source: next.source ?? 'extract',
+      }
+      entries.push(entry)
+      return { created: true, entry }
+    })
   }
 
   /** 替换单条（用于裁决操作：改标签/移项目/置顶）。返回新条目；不存在返回 undefined。 */
   async patchEntry(id: string, patch: Partial<Omit<MemoryEntry, 'id' | 'createdAt'>>): Promise<MemoryEntry | undefined> {
-    const entries = await this.readEntries()
-    const index = entries.findIndex(entry => entry.id === id)
-    if (index === -1) return undefined
-    const updated: MemoryEntry = {
-      ...entries[index],
-      ...patch,
-      id,
-      updatedAt: nowIso(),
-    }
-    if (updated.scope === 'global') updated.projectHash = null
-    const next = [...entries]
-    next[index] = updated
-    await this.writeEntries(next)
-    return updated
+    return this.mutateEntries(entries => {
+      const index = entries.findIndex(entry => entry.id === id)
+      if (index === -1) return undefined
+      const updated: MemoryEntry = {
+        ...entries[index],
+        ...patch,
+        id,
+        updatedAt: nowIso(),
+      }
+      if (updated.scope === 'global') updated.projectHash = null
+      entries[index] = updated
+      return updated
+    })
   }
 
   /** 删除条目。返回是否删除成功。 */
   async removeEntry(id: string): Promise<boolean> {
-    const entries = await this.readEntries()
-    const next = entries.filter(entry => entry.id !== id)
-    if (next.length === entries.length) return false
-    await this.writeEntries(next)
-    return true
+    return this.mutateEntries(entries => {
+      const index = entries.findIndex(entry => entry.id === id)
+      if (index === -1) return false
+      entries.splice(index, 1)
+      return true
+    })
+  }
+
+  /** 注入命中刷新（原子）：给命中的条目加分并刷新 lastHitAt，返回刷新条数。 */
+  async applyHits(hitIds: Set<string>, bonus: number): Promise<number> {
+    return this.mutateEntries(entries => {
+      let count = 0
+      for (const entry of entries) {
+        if (!hitIds.has(entry.id)) continue
+        entry.importance = Math.min(20, Math.round((entry.importance + bonus) * 100) / 100)
+        entry.lastHitAt = nowIso()
+        count += 1
+      }
+      return count
+    })
+  }
+
+  /** 原子替换全部条目（ticker 每日编译等批量场景；fn 返回新数组）。 */
+  async replaceEntries(fn: (entries: MemoryEntry[]) => Promise<MemoryEntry[]> | MemoryEntry[]): Promise<MemoryEntry[]> {
+    return this.enqueueWrite(async () => {
+      const entries = await this.readEntries()
+      const next = await fn(entries)
+      await this.writeEntries(next)
+      return next
+    })
   }
 
   // ── 变更流 ──────────────────────────────────────────────────────────

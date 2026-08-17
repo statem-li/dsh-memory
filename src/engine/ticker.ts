@@ -63,27 +63,26 @@ export function createTicker(
     await store.writeState(state)
     if (last === today) return
 
-    const entries = await store.readEntries()
     const days = last === null ? 1 : Math.max(1, Math.floor((Date.parse(today) - Date.parse(last)) / 86_400_000))
 
-    // 1) 全量衰减。
-    const decayed = entries.map(entry => ({
-      ...entry,
-      importance: decayImportance(entry.importance, days, config.decayLambda),
-    }))
-
-    // 2) 折叠 + 滚出。
-    const { promoted, remaining } = promoteEntries(decayed, config.compileThreshold)
-    const kept: typeof remaining = []
-    const evicted: typeof remaining = []
-    for (const entry of remaining) {
-      if (shouldEvict(entry, config.compileThreshold)) evicted.push(entry)
-      else kept.push(entry)
-    }
-
-    // 3) 写回。
-    const nextEntries = [...promoted, ...kept]
-    await store.writeEntries(nextEntries)
+    // 1-3) 衰减 → 折叠 → 滚出 → 原子写回（走 store 写队列，避免与提取/裁决并发覆盖）。
+    let promoted: Array<import('../types.ts').MemoryEntry> = []
+    let evicted: Array<import('../types.ts').MemoryEntry> = []
+    await store.replaceEntries(entries => {
+      const decayed = entries.map(entry => ({
+        ...entry,
+        importance: decayImportance(entry.importance, days, config.decayLambda),
+      }))
+      const result = promoteEntries(decayed, config.compileThreshold)
+      promoted = result.promoted
+      const kept: typeof result.remaining = []
+      evicted = []
+      for (const entry of result.remaining) {
+        if (shouldEvict(entry, config.compileThreshold)) evicted.push(entry)
+        else kept.push(entry)
+      }
+      return [...promoted, ...kept]
+    })
 
     // 4) 变更流。
     for (const entry of promoted) {

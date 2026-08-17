@@ -66,16 +66,14 @@ export function createMemoryInjector(
     if (selected.length === 0) return null
 
     // 命中刷新：从未命中或距上次命中 ≥1 天的条目加分并重置衰减起点（最多 MAX_HITS 条）。
-    const now = nowIso()
+    // 走 store 原子队列，避免与提取/裁决并发写 entries.json 互相覆盖。
     const hitCandidates = selected
       .filter(entry => entry.lastHitAt === null || daysSince(entry.lastHitAt) >= 1)
       .slice(0, MAX_HITS_PER_INJECTION)
     if (hitCandidates.length > 0) {
       const hitIds = new Set(hitCandidates.map(entry => entry.id))
-      const refreshed = entries.map(entry =>
-        hitIds.has(entry.id) ? applyHit(entry, config.hitBonus) : entry)
-      await store.writeEntries(refreshed)
-      logger?.debug?.(`[dsh-memory] hit refresh: ${hitCandidates.length} entries`)
+      const refreshed = await store.applyHits(hitIds, config.hitBonus)
+      logger?.debug?.(`[dsh-memory] hit refresh: ${refreshed} entries`)
     }
 
     return buildInjectionText(selected, config)
