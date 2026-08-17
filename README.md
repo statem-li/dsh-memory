@@ -31,6 +31,28 @@
 
 ## 安装
 
+### 方式 A：DSH 官方一条指令（推荐，装发布版）
+
+```powershell
+# 从 GitHub 安装（自动 clone 到 profile 的 node_modules）
+dsh plugin --profile web add github:statem-li/dsh-memory
+
+# 注意：本包是 insert 型插件（无 dsh.bundle 声明），官方命令只负责安装包，
+# 不会自动加入 profile 层——装完后需手动注册（若已用旧方式注册过则跳过）：
+# 编辑 ~/.dsh/profiles/web/cordis.patch.yml，追加：
+#   - insert:
+#       - id: dsh-memory
+#         name: "@dsh-external/dsh-memory"
+# 然后重启 DSH。
+```
+
+- 运行时依赖 `@deepseek-ai/dsh-llm`、`@deepseek-ai/dsh-tools` 由 DSH 运行时的
+  `~/.dsh/profiles/node_modules` 提供（host 半身为 external import，向上解析），**无需额外安装**。
+- 更新发布版：`dsh plugin --profile web update github:statem-li/dsh-memory` 或重新 `add`。
+- 若之前用方式 B 装过，先删除 junction 再执行方式 A，避免 node_modules 冲突。
+
+### 方式 B：本地 junction（开发迭代，改源码即生效）
+
 ```powershell
 # 1) 构建（依赖 DSH checkout）
 $env:DSH_CHECKOUT = "D:\AI\deepseek-harness"
