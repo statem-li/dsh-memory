@@ -215,11 +215,13 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
     setError('')
     try {
       await operation()
-      await load()
     } catch (operationError) {
       setError(operationError instanceof Error ? operationError.message : String(operationError))
     } finally {
       setBusy(false)
+      // 无论操作成功与否都刷新列表：清除幽灵条目（已被外部删除/并发丢失的条目），
+      // 避免"删除报不存在但面板仍显示"。
+      await load()
     }
   }
 

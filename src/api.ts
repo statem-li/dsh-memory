@@ -209,9 +209,16 @@ async function handle(
       const body = await readBody(req) as Record<string, unknown>
       const entryId = requireString(body.entryId, 'entryId')
       const existing = await store.getEntry(entryId)
-      if (existing === undefined) throw new Error(`记忆不存在：${entryId}`)
+      // 幂等删除：条目已不存在时也返回 ok（面板旧数据/幽灵条目删除不再报错）。
+      if (existing === undefined) {
+        json(res, 200, { ok: true, alreadyGone: true })
+        return
+      }
       const ok = await store.removeEntry(entryId)
-      if (!ok) throw new Error(`记忆不存在：${entryId}`)
+      if (!ok) {
+        json(res, 200, { ok: true, alreadyGone: true })
+        return
+      }
       await store.appendChange({
         action: 'delete',
         entryId,
