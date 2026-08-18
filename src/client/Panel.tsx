@@ -447,52 +447,59 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
           </div>
         ) : (
           <>
-            <div className={css.cardContent}>{entry.content}</div>
-            <div className={css.cardMeta}>
-              <span>{entry.scope === 'global' ? t('scopeGlobal') : projectName(entry.projectHash, projects)}</span>
-              <span>[{entry.importance}]</span>
-              <span>{entry.source === 'manual' ? t('sourceManual') : t('sourceExtract')}</span>
-              <span>{relativeTime(entry.updatedAt)}</span>
-              {entry.layer === 'long' && <span>{t('groupLongterm')}</span>}
-            </div>
-            {entry.tags.length > 0 && (
-              <div className={css.chips}>
-                {entry.tags.map(tagName => (
-                  <button
-                    key={tagName}
-                    type="button"
-                    className={tag === tagName ? `${css.chip} ${css.chipActive}` : css.chip}
-                    onClick={() => { setTag(tag === tagName ? '' : tagName) }}
-                  >
-                    {tagName}
-                  </button>
-                ))}
+            <div className={css.cardHead}>
+              <div className={css.cardContent}>
+                {entry.pinned && <span className={css.pinMark}><PinIcon size={12} filled /></span>}
+                {entry.content}
               </div>
-            )}
+              <div className={css.cardActions}>
+                <Tooltip label={entry.pinned ? t('unpin') : t('pin')} side="top" delayMs={500}>
+                  <button type="button" className={css.iconAction} aria-label={entry.pinned ? t('unpin') : t('pin')} disabled={busy} onClick={() => { handlePin(entry) }}>
+                    <PinIcon size={14} filled={entry.pinned} />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t('edit')} side="top" delayMs={500}>
+                  <button type="button" className={css.iconAction} aria-label={t('edit')} disabled={busy} onClick={() => { startEdit(entry) }}>
+                    <IconEditOutline16 size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t('move')} side="top" delayMs={500}>
+                  <button type="button" className={css.iconAction} aria-label={t('move')} disabled={busy} onClick={() => { startMove(entry) }}>
+                    <IconFolderOpenOutline16 size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t('delete')} side="top" delayMs={500}>
+                  <button type="button" className={css.iconAction} aria-label={t('delete')} disabled={busy} onClick={() => { handleDelete(entry) }}>
+                    <IconTrashOutline16 size={14} />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+            <div className={css.cardFoot}>
+              {entry.tags.length > 0 && (
+                <div className={css.chips}>
+                  {entry.tags.map(tagName => (
+                    <button
+                      key={tagName}
+                      type="button"
+                      className={tag === tagName ? `${css.chip} ${css.chipActive}` : css.chip}
+                      onClick={() => { setTag(tag === tagName ? '' : tagName) }}
+                    >
+                      {tagName}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={css.cardMeta}>
+                <span>{entry.scope === 'global' ? t('scopeGlobal') : projectName(entry.projectHash, projects)}</span>
+                <span>{entry.importance}</span>
+                <span>{entry.source === 'manual' ? t('sourceManual') : t('sourceExtract')}</span>
+                <span>{relativeTime(entry.updatedAt)}</span>
+                {entry.layer === 'long' && <span>{t('groupLongterm')}</span>}
+              </div>
+            </div>
           </>
         )}
-      </div>
-      <div className={css.cardActions}>
-        <Tooltip label={entry.pinned ? t('unpin') : t('pin')} side="top" delayMs={500}>
-          <button type="button" className={css.iconAction} aria-label={entry.pinned ? t('unpin') : t('pin')} disabled={busy} onClick={() => { handlePin(entry) }}>
-            <PinIcon size={14} filled={entry.pinned} />
-          </button>
-        </Tooltip>
-        <Tooltip label={t('edit')} side="top" delayMs={500}>
-          <button type="button" className={css.iconAction} aria-label={t('edit')} disabled={busy} onClick={() => { startEdit(entry) }}>
-            <IconEditOutline16 size={14} />
-          </button>
-        </Tooltip>
-        <Tooltip label={t('move')} side="top" delayMs={500}>
-          <button type="button" className={css.iconAction} aria-label={t('move')} disabled={busy} onClick={() => { startMove(entry) }}>
-            <IconFolderOpenOutline16 size={14} />
-          </button>
-        </Tooltip>
-        <Tooltip label={t('delete')} side="top" delayMs={500}>
-          <button type="button" className={css.iconAction} aria-label={t('delete')} disabled={busy} onClick={() => { handleDelete(entry) }}>
-            <IconTrashOutline16 size={14} />
-          </button>
-        </Tooltip>
       </div>
     </li>
   )
@@ -545,9 +552,9 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
       contentClassName={css.modalBody ?? ''}
     >
       <div className={css.panel} aria-busy={state.status === 'loading'}>
-        {/* Tab */}
+        {/* Tab：置顶 / 全部 / 变更 */}
         <div className={css.tabs} role="tablist">
-          {(['all', 'changes', 'pinned'] as const).map(key => (
+          {(['pinned', 'all', 'changes'] as const).map(key => (
             <button
               key={key}
               type="button"
