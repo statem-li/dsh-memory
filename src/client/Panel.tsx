@@ -21,7 +21,7 @@ import { css, ensureStyles } from './styles.ts'
 import { changeActionLabel } from './Notify.tsx'
 
 /** 面板 Tab。 */
-export type MemoryTab = 'all' | 'changes' | 'pinned'
+export type MemoryTab = 'all' | 'changes'
 
 /** 时间分组。 */
 type GroupKey = 'today' | 'week' | 'earlier' | 'longterm'
@@ -552,9 +552,9 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
       contentClassName={css.modalBody ?? ''}
     >
       <div className={css.panel} aria-busy={state.status === 'loading'}>
-        {/* Tab：置顶 / 全部 / 变更 */}
+        {/* Tab：全部 / 变更 */}
         <div className={css.tabs} role="tablist">
-          {(['pinned', 'all', 'changes'] as const).map(key => (
+          {(['all', 'changes'] as const).map(key => (
             <button
               key={key}
               type="button"
@@ -563,13 +563,13 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
               className={tab === key ? `${css.tab} ${css.tabActive}` : css.tab}
               onClick={() => { setTab(key) }}
             >
-              {key === 'all' ? t('tabAll') : key === 'changes' ? `${t('tabChanges')}${changes.length > 0 ? ` (${changes.length})` : ''}` : t('tabPinned')}
+              {key === 'all' ? t('tabAll') : `${t('tabChanges')}${changes.length > 0 ? ` (${changes.length})` : ''}`}
             </button>
           ))}
         </div>
 
-        {/* 置顶区（固定在所有 Tab 上方；置顶 Tab 自身不重复，下方即置顶内容） */}
-        {state.status === 'ready' && tab !== 'pinned' && pinned.length > 0 && (
+        {/* 置顶区（常驻固定在全部/变更之上，所有 Tab 可见） */}
+        {state.status === 'ready' && pinned.length > 0 && (
           <>
             <div className={css.sectionTitle}>{t('tabPinned')}</div>
             <ul className={css.cardList}>{pinned.map(renderCard)}</ul>
@@ -759,13 +759,6 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
               ? renderEmpty(t('changesEmpty'))
               : <ul className={css.cardList}>{visibleChanges.map(renderChange)}</ul>}
           </>
-        )}
-
-        {/* 置顶 */}
-        {state.status === 'ready' && tab === 'pinned' && (
-          pinned.length === 0
-            ? renderEmpty(t('pinnedEmpty'))
-            : <ul className={css.cardList}>{pinned.map(renderCard)}</ul>
         )}
       </div>
     </Modal>
