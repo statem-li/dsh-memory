@@ -9,7 +9,7 @@ import { URL } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type { MemoryConfig, MemoryEntry } from './types.ts'
 import { compileAll } from './engine/compile.ts'
-import { localDate, mergeTags, nowIso, projectHashOf, summarize, type MemoryStore } from './engine/store.ts'
+import { localDate, mergeTags, nowIso, projectHashOf, entryIdOf, summarize, type MemoryStore } from './engine/store.ts'
 
 /** Minimal service-shaped view of the webserver route register. */
 declare module '@deepseek-ai/cordis' {
@@ -169,6 +169,7 @@ async function handle(
       if (Array.isArray(body.tags)) {
         patch.tags = body.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim() !== '').map(tag => tag.trim()).slice(0, 8)
       }
+      const before = await store.getEntry(entryId)
       const entry = await store.patchEntry(entryId, patch)
       if (entry === undefined) throw new Error(`记忆不存在：${entryId}`)
       await store.appendChange({
@@ -177,6 +178,8 @@ async function handle(
         scope: entry.scope,
         projectHash: entry.projectHash,
         summary: summarize(entry.content),
+        before: before?.content,
+        after: entry.content,
       })
       json(res, 200, { ok: true, entry: toView(entry) })
       return
@@ -215,6 +218,8 @@ async function handle(
         scope: entry.scope,
         projectHash: entry.projectHash,
         summary: `移项目：${summarize(entry.content)}`,
+        before: existing.content,
+        after: entry.content,
       })
       await compileAll(store, config)
       json(res, 200, { ok: true, entry: toView(entry) })
@@ -287,6 +292,7 @@ async function handle(
           })
         }
       }
+      const beforeEntry = await store.getEntry(entryIdOf(content, scope, scope === 'project' ? projectHash : null))
       const { created, entry } = await store.upsertEntry({
         content,
         scope,
@@ -302,6 +308,8 @@ async function handle(
         scope: entry.scope,
         projectHash: entry.projectHash,
         summary: summarize(entry.content),
+        before: beforeEntry?.content,
+        after: entry.content,
       })
       await compileAll(store, config)
       json(res, 200, { ok: true, created, entry: toView(entry) })

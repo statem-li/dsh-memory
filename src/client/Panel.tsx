@@ -205,14 +205,6 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
     if (open) void load()
   }, [open, load])
 
-  // 面板打开期间定时自动刷新（10s）：新工作区/新提取的记忆实时出现，
-  // 无需手动重开面板。
-  useEffect(() => {
-    if (!open) return
-    const timer = window.setInterval(() => { void load() }, 10_000)
-    return () => window.clearInterval(timer)
-  }, [open, load])
-
   useEffect(() => {
     if (open && initialTab !== undefined) setTab(initialTab)
   }, [open, initialTab])
@@ -241,10 +233,6 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
   const handleDelete = (entry: MemoryEntryView): void => {
     if (!window.confirm(t('deleteConfirm'))) return
     void run(() => api.deleteEntry(entry.id))
-  }
-
-  const handleDeleteChange = (change: ChangeView): void => {
-    void run(() => api.deleteEntry(change.entryId))
   }
 
   /** 提交手动添加记忆。 */
@@ -501,25 +489,33 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
     </li>
   )
 
-  const renderChange = (change: ChangeView): JSX.Element => (
-    <li key={change.id} className={css.changeRow}>
-      <span className={css.changeBadge}>{changeActionLabel(change.action)}</span>
-      <div className={css.cardMain}>
-        <div className={css.cardContent}>{change.summary}</div>
-        <div className={css.cardMeta}>
-          <span>{change.scope === 'global' ? t('scopeGlobal') : change.projectHash ?? ''}</span>
-          <span>{relativeTime(change.at)}</span>
+  /** 渲染一条变更（含前后内容对比，无删除按钮）。 */
+  const renderChange = (change: ChangeView): JSX.Element => {
+    const hasDiff = change.before !== undefined && change.after !== undefined && change.before !== change.after
+    return (
+      <li key={change.id} className={css.changeRow}>
+        <span className={css.changeBadge}>{changeActionLabel(change.action)}</span>
+        <div className={css.cardMain}>
+          <div className={css.cardMeta}>
+            <span>{change.scope === 'global' ? t('scopeGlobal') : change.projectHash ?? ''}</span>
+            <span>{relativeTime(change.at)}</span>
+          </div>
+          {change.action === 'delete' ? (
+            <div className={css.cardContent}>{change.summary}</div>
+          ) : hasDiff ? (
+            <>
+              <div className={css.cardMeta}><span>{t('diffOld')}</span></div>
+              <div className={`${css.cardContent} ${css.changeOld}`}>{change.before}</div>
+              <div className={css.cardMeta}><span>{t('diffNew')}</span></div>
+              <div className={`${css.cardContent} ${css.changeNew}`}>{change.after}</div>
+            </>
+          ) : (
+            <div className={css.cardContent}>{change.after ?? change.summary}</div>
+          )}
         </div>
-      </div>
-      {change.action !== 'delete' && (
-        <div className={css.changeActions}>
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => { handleDeleteChange(change) }}>
-            {t('delete')}
-          </Button>
-        </div>
-      )}
-    </li>
-  )
+      </li>
+    )
+  }
 
   const renderEmpty = (text: string): JSX.Element => <div className={css.empty}>{text}</div>
 
@@ -639,64 +635,64 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
           </div>
         )}
 
-        {/* 项目切换 + 搜索 */}
-        {tab === 'all' && (
-          <>
-            <div className={css.topRow}>
-              <div className={css.projectChips} role="group" aria-label={t('scopeGlobal')}>
-                <button
-                  type="button"
-                  className={scope === 'all' ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
-                  onClick={() => { setScope('all') }}
-                >
-                  {t('tabAll')}
-                </button>
-                <button
-                  type="button"
-                  className={scope === 'global' ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
-                  onClick={() => { setScope('global') }}
-                >
-                  {t('scopeGlobal')}
-                </button>
-                {projects.map(project => (
-                  <button
-                    key={project.hash}
-                    type="button"
-                    title={project.path}
-                    className={scope === `project:${project.hash}` ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
-                    onClick={() => { setScope(scope === `project:${project.hash}` ? 'all' : `project:${project.hash}`) }}
-                  >
-                    {project.alias ?? project.path.split(/[\\/]/).filter(Boolean).at(-1) ?? project.hash}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={css.searchRow}>
-              <input
-                className={css.searchInput}
-                value={q}
-                placeholder={t('searchPlaceholder')}
-                aria-label={t('searchPlaceholder')}
-                onChange={(event) => { setQ(event.currentTarget.value) }}
-              />
-              <select
-                className={css.tagSelect}
-                value={tag}
-                aria-label={t('tagFilterPlaceholder')}
-                onChange={(event) => { setTag(event.currentTarget.value) }}
+        {/* 项目切换（全部/全局/项目 —— 所有 Tab 通用，置顶区同样按此筛选） */}
+        <div className={css.topRow}>
+          <div className={css.projectChips} role="group" aria-label={t('scopeGlobal')}>
+            <button
+              type="button"
+              className={scope === 'all' ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
+              onClick={() => { setScope('all') }}
+            >
+              {t('tabAll')}
+            </button>
+            <button
+              type="button"
+              className={scope === 'global' ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
+              onClick={() => { setScope('global') }}
+            >
+              {t('scopeGlobal')}
+            </button>
+            {projects.map(project => (
+              <button
+                key={project.hash}
+                type="button"
+                title={project.path}
+                className={scope === `project:${project.hash}` ? `${css.projectChip} ${css.projectChipActive}` : css.projectChip}
+                onClick={() => { setScope(scope === `project:${project.hash}` ? 'all' : `project:${project.hash}`) }}
               >
-                <option value="">{t('tagFilterPlaceholder')}</option>
-                {allTags.map(item => (
-                  <option key={item.tag} value={item.tag}>{item.tag} ({item.count})</option>
-                ))}
-              </select>
-              <Tooltip label={t('retry')} side="top" delayMs={500}>
-                <button type="button" className={css.iconAction} aria-label={t('retry')} onClick={() => { void load() }}>
-                  <IconRefreshOutline14 />
-                </button>
-              </Tooltip>
-            </div>
-          </>
+                {project.alias ?? project.path.split(/[\\/]/).filter(Boolean).at(-1) ?? project.hash}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 搜索 + 标签筛选（全部 Tab） */}
+        {tab === 'all' && (
+          <div className={css.searchRow}>
+            <input
+              className={css.searchInput}
+              value={q}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
+              onChange={(event) => { setQ(event.currentTarget.value) }}
+            />
+            <select
+              className={css.tagSelect}
+              value={tag}
+              aria-label={t('tagFilterPlaceholder')}
+              onChange={(event) => { setTag(event.currentTarget.value) }}
+            >
+              <option value="">{t('tagFilterPlaceholder')}</option>
+              {allTags.map(item => (
+                <option key={item.tag} value={item.tag}>{item.tag} ({item.count})</option>
+              ))}
+            </select>
+            <Tooltip label={t('retry')} side="top" delayMs={500}>
+              <button type="button" className={css.iconAction} aria-label={t('retry')} onClick={() => { void load() }}>
+                <IconRefreshOutline14 />
+              </button>
+            </Tooltip>
+          </div>
         )}
 
         {error !== '' && <p className={css.error}>{error}</p>}

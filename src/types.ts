@@ -43,6 +43,10 @@ export interface ChangeRecord {
   projectHash: string | null
   /** 摘要（截断 80 字）。 */
   summary: string
+  /** 变更前内容（update/delete 时的旧内容，供面板前后对比）。 */
+  before?: string
+  /** 变更后内容（add/update 时的新内容，供面板前后对比）。 */
+  after?: string
   /** ISO 时间。 */
   at: string
 }

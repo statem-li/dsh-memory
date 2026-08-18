@@ -38,6 +38,8 @@ export interface ChangeView {
   scope: 'global' | 'project'
   projectHash: string | null
   summary: string
+  before?: string
+  after?: string
   at: string
 }
 

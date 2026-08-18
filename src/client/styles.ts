@@ -38,6 +38,8 @@ export const css = {
   changeBadge: 'dsh-memory-change-badge',
   changeSummary: 'dsh-memory-change-summary',
   changeActions: 'dsh-memory-change-actions',
+  changeOld: 'dsh-memory-change-old',
+  changeNew: 'dsh-memory-change-new',
   inlineForm: 'dsh-memory-inline-form',
   inlineInput: 'dsh-memory-inline-input',
   inlineTextarea: 'dsh-memory-inline-textarea',
@@ -69,9 +71,11 @@ const SHEET = `
 .dsh-memory-entry[aria-expanded='true']{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.06));color:var(--dsw-alias-label-primary,#eee)}
 .dsh-memory-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dsh-memory-entry-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;box-sizing:border-box;padding:0 4px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--dsw-alias-state-warning-primary,#e8a33d);color:#0e1116;font-size:10px;font-weight:700;line-height:16px}
-.dsh-memory-modal{width:min(560px,calc(100vw - 48px))}
+.dsh-memory-modal{width:min(1120px,calc(100vw - 48px))}
 .dsh-memory-modal-body{overflow:hidden;display:flex;flex-direction:column}
-.dsh-memory-panel{display:flex;flex-direction:column;gap:8px;max-height:min(640px,calc(100vh - 220px));overflow-y:auto;padding:2px 2px 6px;box-sizing:border-box}
+.dsh-memory-change-old{color:var(--dsw-alias-label-tertiary,#888);text-decoration:line-through;opacity:.8}
+.dsh-memory-change-new{color:var(--dsw-alias-label-primary,#eee)}
+.dsh-memory-panel{display:flex;flex-direction:column;gap:8px;max-height:min(720px,calc(100vh - 160px));overflow-y:auto;padding:2px 2px 6px;box-sizing:border-box}
 .dsh-memory-tabs{flex:none;display:flex;align-items:center;gap:2px;padding:2px;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.08));border-radius:10px;background:var(--dsw-alias-bg-layer-1,#1c1f26)}
 .dsh-memory-tab{flex:1;appearance:none;border:none;background:transparent;border-radius:8px;padding:5px 10px;font-size:13px;line-height:18px;color:var(--dsw-alias-label-secondary,#999);cursor:pointer}
 .dsh-memory-tab:hover{color:var(--dsw-alias-label-primary,#eee)}

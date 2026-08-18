@@ -13,7 +13,7 @@ import { mountMemoryRoutes } from './api.ts'
 import { compileAll, workspaceHashOf } from './engine/compile.ts'
 import { extractCandidates, transcriptFromEvents } from './engine/extract.ts'
 import { createMemoryInjector } from './engine/inject.ts'
-import { MemoryStore, summarize } from './engine/store.ts'
+import { MemoryStore, entryIdOf, summarize } from './engine/store.ts'
 import { createTicker } from './engine/ticker.ts'
 import { registerMemoryTools } from './tools.ts'
 import type { MemoryConfig } from './types.ts'
@@ -179,6 +179,8 @@ async function extractTurn(
       hash = workspaceHashOf(agent.session.header)
       if (hash === null) scope = 'global'
     }
+    // 变更对比：update 时记录旧内容（before，必须在 upsert 前读取）。
+    const beforeEntry = await store.getEntry(entryIdOf(candidate.content, scope, hash))
     const { created, entry } = await store.upsertEntry({
       content: candidate.content,
       scope,
@@ -206,6 +208,8 @@ async function extractTurn(
       scope: entry.scope,
       projectHash: entry.projectHash,
       summary: summarize(entry.content),
+      before: beforeEntry?.content,
+      after: entry.content,
     })
   }
   // 成功：清零失败计数。
