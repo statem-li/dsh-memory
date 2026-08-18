@@ -49,9 +49,9 @@ export function groupEntries(entries: MemoryEntry[], now = new Date()): Record<T
 /** 单条 md 行。 */
 function entryLine(entry: MemoryEntry): string {
   const tagText = entry.tags.length > 0 ? ` \`${entry.tags.join('` `')}\`` : ''
-  const pin = entry.pinned ? '📌 ' : ''
+  // 置顶由所在区块标题（# 置顶）标识，行内不再重复加 📌（避免"两个置顶图标"的视觉冗余）。
   const score = entry.importance >= 10 ? '' : ` [${entry.importance}]`
-  return `- ${pin}${entry.content.replace(/\n/g, ' ')}${score}${tagText}`
+  return `- ${entry.content.replace(/\n/g, ' ')}${score}${tagText}`
 }
 
 /** 渲染 timeline（短期分组 + 长期沉淀）。 */
