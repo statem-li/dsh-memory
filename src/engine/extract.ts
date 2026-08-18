@@ -78,7 +78,7 @@ export function extractSystemPrompt(): string {
     '- tags: 1-4 short category tags in the same language as the content (e.g. 技术, 踩坑, 架构, 偏好).',
     '- importance: integer 1-10; higher = more valuable to remember. Use 6+ for real facts, 8+ for critical decisions.',
     '- content: write in the original language of the conversation, one complete concise sentence or bullet.',
-    '- NEVER extract project instruction files (AGENTS.md, CLAUDE.md, or any workspace instruction/context injection): those are auto-injected by the harness and must NOT be stored as memory.',
+    '- NEVER extract project instruction files (AGENTS.md, CLAUDE.md), the skill catalog (available skills list), or any skill content: those are auto-injected by the harness and must NOT be stored as memory.',
     '- If nothing is worth remembering, return {"memories":[]}.',
   ].join('\n')
 }
@@ -184,12 +184,13 @@ export function transcriptFromEvents(events: Array<{ type: string; data: unknown
   for (const event of events) {
     if (event.type === 'user/message') {
       const message = event.data as { role?: string; content?: unknown; source?: { kind?: string } }
-      // 跳过注入类上下文消息：
+      // 跳过注入类上下文消息（这些由 DSH/插件自动注入，重复提取成记忆只会造成噪音与冲突）：
       // - plugin：本插件记忆、openviking recall 等插件注入
-      // - agent-instructions：AGENTS.md / 项目指令文件自动注入（DSH 已自动注入，
-      //   不应重复提取成记忆，否则与项目指令冲突）
-      if (message.source?.kind === 'plugin') continue
-      if (message.source?.kind === 'agent-instructions') continue
+      // - agent-instructions：AGENTS.md / 项目指令文件自动注入
+      // - skill-catalog：DSH 技能目录（可用技能列表）自动注入
+      // - skill-invocation：用户触发加载的技能内容
+      const injectedKinds = ['plugin', 'agent-instructions', 'skill-catalog', 'skill-invocation']
+      if (typeof message.source?.kind === 'string' && injectedKinds.includes(message.source.kind)) continue
       lines.push(`User: ${textOfContent(message.content)}`)
     } else if (event.type === 'assistant/message') {
       const data = event.data as { message?: { content?: unknown } }
