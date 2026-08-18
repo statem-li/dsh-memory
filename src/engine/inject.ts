@@ -100,8 +100,15 @@ export function createMemoryInjector(
     try {
       const block = await buildMemoryBlock(payload.agent)
       if (block === null || block.text === '') return decision
-      // 注入引导：明确记忆属于用户指令/参考，模型应"该执行就执行"。
-      const wrapped = `${SAFETY_RULE}\n\n【长期记忆 · 用户要求按需执行或参考】\n${block.text}`
+      // 注入引导：明确记忆属于用户指令/参考，模型应"该执行就执行"；
+      // 同时声明优先级——与 AGENTS.md/项目指令/系统提示冲突时，以项目指令为准，
+      // 记忆不覆盖项目级规范（避免与项目指令打架）。
+      const wrapped = [
+        SAFETY_RULE,
+        '【长期记忆 · 用户要求按需执行或参考】',
+        '（若与当前项目的 AGENTS.md / 项目指令或系统提示冲突，一律以项目指令为准；记忆仅作参考与用户偏好补充）',
+        block.text,
+      ].join('\n')
       const memoryMessage = createUserMessage({
         content: [{ type: 'text', text: wrapped }],
         source: {
