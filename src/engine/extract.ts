@@ -114,9 +114,9 @@ export async function extractCandidates(
         source: { kind: 'plugin', plugin: 'dsh-memory' },
       })],
       system: extractSystemPrompt(),
-      maxTokens: 1200,
+      // 推理模型需要空间输出 JSON：text + reasoning 都会产生，上限调高。
+      maxTokens: 2048,
       signal: controller.signal,
-      purpose: 'compaction' as const,
     }
     const assembler = new BlockAssembler()
     for await (const chunk of llm.stream(options)) {
@@ -124,9 +124,11 @@ export async function extractCandidates(
     }
     const finish = assembler.finish
     if (finish.kind !== 'stop') return []
+    // 同时聚合 text 与 reasoning 块：部分推理模型（route=bai 等）在低 token
+    // 预算下可能只产出 reasoning 而 text 为空，导致解析出 0 候选。
     const text = assembler.blocks()
-      .filter(block => block.type === 'text')
-      .map(block => (block as { text: string }).text)
+      .filter(block => block.type === 'text' || block.type === 'reasoning')
+      .map(block => (block as { text?: string }).text ?? '')
       .join(' ')
     const candidates = parseExtractOutput(text)
     // 应用 importance 下限 + 敏感凭据过滤（token/密钥/私钥绝不入库）。
