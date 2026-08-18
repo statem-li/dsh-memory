@@ -60,7 +60,7 @@ describe('createMemoryInjector', () => {
     expect(text).toContain('重要置顶')
   })
 
-  it('注入频率：第 2-8 步不注入，第 9 步（每 8 步）刷新', async () => {
+  it('每个会话只在首步注入一次，后续轮次不再注入', async () => {
     await seedEntries()
     const injector = createMemoryInjector(store, config(), undefined)
     const signal = new AbortController().signal
@@ -69,13 +69,10 @@ describe('createMemoryInjector', () => {
     const first = await injector.preStepListener({ agent, messages: [], signal }, next)
     expect((first as { messages: unknown[] }).messages).toHaveLength(1)
 
-    for (let step = 2; step <= 8; step += 1) {
+    for (let step = 2; step <= 30; step += 1) {
       const decision = await injector.preStepListener({ agent, messages: [], signal }, next)
       expect((decision as { messages: unknown[] }).messages).toHaveLength(0)
     }
-
-    const ninth = await injector.preStepListener({ agent, messages: [], signal }, next)
-    expect((ninth as { messages: unknown[] }).messages).toHaveLength(1)
   })
 
   it('命中刷新：lastHitAt 更新且 importance 加分', async () => {

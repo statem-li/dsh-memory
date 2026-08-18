@@ -93,10 +93,10 @@ export function createMemoryInjector(
     const sessionId = payload.agent.session.id
     // 该会话的记忆注入开关（对话框旁开关控制）：关闭则本会话不注入。
     if (!(await store.isInjectEnabled(sessionId))) return decision
-    const counter = (stepCounters.get(sessionId) ?? 0) + 1
-    stepCounters.set(sessionId, counter)
-    // 注入频率：首步必注，之后每 injectRefreshSteps 步刷新一次。
-    if (counter > 1 && (counter - 1) % config.injectRefreshSteps !== 0) return decision
+    // 每个会话只在首步注入一次：后续轮次不再重复注入，
+    // 避免置顶/记忆内容在多轮里反复出现（用户明确要求仅首轮注入）。
+    if (stepCounters.has(sessionId)) return decision
+    stepCounters.set(sessionId, 1)
     try {
       const block = await buildMemoryBlock(payload.agent)
       if (block === null || block.text === '') return decision
