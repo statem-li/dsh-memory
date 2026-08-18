@@ -332,6 +332,14 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
 
   const pinned = useMemo(() => filtered.filter(entry => entry.pinned), [filtered])
   const grouped = useMemo(() => groupEntries(filtered.filter(entry => !entry.pinned)), [filtered])
+  // 变更按当前 全部/全局/项目 筛选（chips 选择即时生效）。
+  const visibleChanges = useMemo(() => changes.filter(change => {
+    if (scope === 'global') return change.scope === 'global'
+    if (scope.startsWith('project:')) {
+      return change.scope === 'project' && change.projectHash === scope.slice('project:'.length)
+    }
+    return true
+  }), [changes, scope])
 
   const groupTitles: Record<GroupKey, string> = {
     today: t('groupToday'),
@@ -494,7 +502,9 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
     const hasDiff = change.before !== undefined && change.after !== undefined && change.before !== change.after
     return (
       <li key={change.id} className={css.changeRow}>
-        <span className={css.changeBadge}>{changeActionLabel(change.action)}</span>
+        <span className={change.action === 'delete' ? `${css.changeBadge} ${css.changeBadgeDelete}` : css.changeBadge}>
+          {changeActionLabel(change.action)}
+        </span>
         <div className={css.cardMain}>
           <div className={css.cardMeta}>
             <span>{change.scope === 'global' ? t('scopeGlobal') : change.projectHash ?? ''}</span>
@@ -503,12 +513,18 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
           {change.action === 'delete' ? (
             <div className={css.cardContent}>{change.summary}</div>
           ) : hasDiff ? (
-            <>
-              <div className={css.cardMeta}><span>{t('diffOld')}</span></div>
-              <div className={`${css.cardContent} ${css.changeOld}`}>{change.before}</div>
-              <div className={css.cardMeta}><span>{t('diffNew')}</span></div>
-              <div className={`${css.cardContent} ${css.changeNew}`}>{change.after}</div>
-            </>
+            /* 左右并排对比：旧 | 新 */
+            <div className={css.changeDiff}>
+              <div className={css.changeDiffCol}>
+                <div className={css.cardMeta}><span>{t('diffOld')}</span></div>
+                <div className={`${css.cardContent} ${css.changeOld}`}>{change.before}</div>
+              </div>
+              <div className={css.changeDiffDivider} />
+              <div className={css.changeDiffCol}>
+                <div className={css.cardMeta}><span>{t('diffNew')}</span></div>
+                <div className={`${css.cardContent} ${css.changeNew}`}>{change.after}</div>
+              </div>
+            </div>
           ) : (
             <div className={css.cardContent}>{change.after ?? change.summary}</div>
           )}
@@ -544,6 +560,14 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
             </button>
           ))}
         </div>
+
+        {/* 置顶区（固定在所有 Tab 上方；置顶 Tab 自身不重复，下方即置顶内容） */}
+        {state.status === 'ready' && tab !== 'pinned' && pinned.length > 0 && (
+          <>
+            <div className={css.sectionTitle}>{t('tabPinned')}</div>
+            <ul className={css.cardList}>{pinned.map(renderCard)}</ul>
+          </>
+        )}
 
         {/* 手动添加记忆 */}
         <div className={css.addRow}>
@@ -705,15 +729,9 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
           </div>
         )}
 
-        {/* 全部：置顶区 + 时间线 */}
+        {/* 全部：时间线（置顶区已在 Tab 上方固定展示） */}
         {state.status === 'ready' && tab === 'all' && (
           <>
-            {pinned.length > 0 && (
-              <>
-                <div className={css.sectionTitle}>{t('tabPinned')}</div>
-                <ul className={css.cardList}>{pinned.map(renderCard)}</ul>
-              </>
-            )}
             {(Object.keys(grouped) as GroupKey[]).map(groupKey => (
               grouped[groupKey].length > 0 && (
                 <div key={groupKey}>
@@ -726,13 +744,13 @@ export function MemoryPanel({ open, onClose, initialTab, t, ...api }: MemoryPane
           </>
         )}
 
-        {/* 变更 */}
+        {/* 变更（按当前 全部/全局/项目 筛选） */}
         {state.status === 'ready' && tab === 'changes' && (
           <>
             <div className={css.sectionTitle}>{t('todayChanges')}</div>
-            {changes.length === 0
+            {visibleChanges.length === 0
               ? renderEmpty(t('changesEmpty'))
-              : <ul className={css.cardList}>{changes.map(renderChange)}</ul>}
+              : <ul className={css.cardList}>{visibleChanges.map(renderChange)}</ul>}
           </>
         )}
 

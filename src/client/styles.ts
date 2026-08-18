@@ -36,10 +36,14 @@ export const css = {
   empty: 'dsh-memory-empty',
   changeRow: 'dsh-memory-change-row',
   changeBadge: 'dsh-memory-change-badge',
+  changeBadgeDelete: 'dsh-memory-change-badge-delete',
   changeSummary: 'dsh-memory-change-summary',
   changeActions: 'dsh-memory-change-actions',
   changeOld: 'dsh-memory-change-old',
   changeNew: 'dsh-memory-change-new',
+  changeDiff: 'dsh-memory-change-diff',
+  changeDiffCol: 'dsh-memory-change-diff-col',
+  changeDiffDivider: 'dsh-memory-change-diff-divider',
   inlineForm: 'dsh-memory-inline-form',
   inlineInput: 'dsh-memory-inline-input',
   inlineTextarea: 'dsh-memory-inline-textarea',
@@ -109,6 +113,10 @@ const SHEET = `
 .dsh-memory-empty{margin:4px 2px;padding:12px 4px;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#888);text-align:center}
 .dsh-memory-change-row{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,.08));border-radius:10px;padding:8px 10px;background:var(--dsw-alias-bg-layer-1,#1c1f26)}
 .dsh-memory-change-badge{flex:none;margin-top:2px;font-size:10px;line-height:14px;padding:1px 6px;border-radius:999px;color:#0e1116;background:var(--dsw-alias-state-warning-primary,#e8a33d);font-weight:700}
+.dsh-memory-change-badge-delete{color:#fff;background:var(--dsw-alias-state-error-primary,#e0434b)}
+.dsh-memory-change-diff{flex:1;min-width:0;display:flex;align-items:stretch;gap:10px}
+.dsh-memory-change-diff-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dsh-memory-change-diff-divider{flex:none;width:1px;background:var(--dsw-alias-border-l1,rgba(255,255,255,.08))}
 .dsh-memory-add-row{flex:none;display:flex;align-items:center;justify-content:flex-end}
 .dsh-memory-add-button{flex:none;display:inline-flex;align-items:center;gap:4px;appearance:none;border:none;border-radius:12px;padding:4px 10px;font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary,#999);background:transparent;cursor:pointer}
 .dsh-memory-add-button:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.06));color:var(--dsw-alias-label-primary,#eee)}
