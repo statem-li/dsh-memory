@@ -103,6 +103,7 @@ export interface MemoryApi {
   update: (entryId: string, patch: { content?: string; tags?: string[] }) => Promise<{ ok: boolean; entry: MemoryEntryView }>
   move: (entryId: string, target: { scope?: string; projectHash?: string; path?: string }) => Promise<{ ok: boolean; entry: MemoryEntryView }>
   deleteEntry: (entryId: string) => Promise<{ ok: boolean }>
+  deleteProject: (projectHash: string) => Promise<{ ok: boolean; deleted: number }>
   meta: (projectHash: string, patch: { alias?: string; locked?: boolean; path?: string }) => Promise<{ ok: boolean; meta: ProjectView }>
   remember: (input: {
     content: string
@@ -137,6 +138,7 @@ export function createMemoryApi(): MemoryApi {
     update: (entryId, patch) => sendJson<{ ok: boolean; entry: MemoryEntryView }>('/update', { entryId, ...patch }),
     move: (entryId, target) => sendJson<{ ok: boolean; entry: MemoryEntryView }>('/move', { entryId, ...target }),
     deleteEntry: (entryId) => sendJson<{ ok: boolean }>('/delete', { entryId }),
+    deleteProject: (projectHash) => sendJson<{ ok: boolean; deleted: number }>('/delete-project', { projectHash }),
     meta: (projectHash, patch) => sendJson<{ ok: boolean; meta: ProjectView }>('/meta', { projectHash, ...patch }),
     remember: (input) => sendJson<{ ok: boolean; created: boolean; entry: MemoryEntryView }>('/remember', input),
     getInjectState: (sessionId) => getJson<{ enabled: boolean }>(`/inject-state?sessionId=${encodeURIComponent(sessionId)}`),

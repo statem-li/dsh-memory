@@ -263,6 +263,30 @@ async function handle(
       json(res, 200, { ok: true, meta: { ...next, hash } })
       return
     }
+    if (method === 'POST' && rest === '/delete-project') {
+      // 按项目清空全部记忆（仅项目层；全局层不动）。
+      const body = await readBody(req) as Record<string, unknown>
+      const projectHash = requireString(body.projectHash, 'projectHash')
+      const removed = await store.mutateEntries(entries => {
+        const targets = entries.filter(entry => entry.scope === 'project' && entry.projectHash === projectHash)
+        for (const target of targets) {
+          entries.splice(entries.indexOf(target), 1)
+        }
+        return targets
+      })
+      for (const entry of removed) {
+        await store.appendChange({
+          action: 'delete',
+          entryId: entry.id,
+          scope: entry.scope,
+          projectHash: entry.projectHash,
+          summary: `清空项目：${summarize(entry.content)}`,
+        })
+      }
+      await compileAll(store, config)
+      json(res, 200, { ok: true, deleted: removed.length })
+      return
+    }
     if (method === 'POST' && rest === '/remember') {
       // 手动添加记忆（面板「添加」）：内容/范围/标签/置顶/重要性。
       const body = await readBody(req) as Record<string, unknown>

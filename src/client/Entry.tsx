@@ -92,6 +92,7 @@ export function MemoryEntry({ wide, t, ...panel }: MemoryEntryProps): JSX.Elemen
         update={panel.update}
         move={panel.move}
         deleteEntry={panel.deleteEntry}
+        deleteProject={panel.deleteProject}
         meta={panel.meta}
         remember={panel.remember}
         getInjectState={panel.getInjectState}

@@ -56,6 +56,8 @@ export const zh = {
   injectOff: '记忆注入：关',
   diffOld: '旧',
   diffNew: '新',
+  clearProject: '清空该项目全部记忆',
+  clearProjectConfirm: '确定清空项目「{name}」的全部 {count} 条记忆？此操作不可恢复。',
   addSaved: '已添加记忆',
 } satisfies Record<string, string>
 
@@ -121,5 +123,7 @@ export const en = {
   injectOff: 'Memory injection: off',
   diffOld: 'Old',
   diffNew: 'New',
+  clearProject: 'Clear all memories in this project',
+  clearProjectConfirm: 'Clear all {count} memories in project "{name}"? This cannot be undone.',
   addSaved: 'Memory added',
 } satisfies Record<MemoryLocaleKey, string>
